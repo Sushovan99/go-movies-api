@@ -20,7 +20,13 @@ type Director struct {
 	LastName  string `json:"lastName"`
 }
 
+type Fail struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
 var movies []Movie
+var fail Fail
 
 func getAllMovies(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content/Type", "application/json")
@@ -28,11 +34,43 @@ func getAllMovies(w http.ResponseWriter, r *http.Request) {
 }
 
 func getMovie(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content/Type", "application/json")
+	params := mux.Vars(r)
 
+	fail = Fail{
+		Status:  "Fail",
+		Message: "Not found",
+	}
+
+	for _, item := range movies {
+		if item.ID == params["id"] {
+			json.NewEncoder(w).Encode(item)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(fail)
 }
 
 func deleteMovie(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
 
+	fail = Fail{
+		Status:  "Fail",
+		Message: "Not found",
+	}
+
+	for index, item := range movies {
+		if item.ID == params["id"] {
+			movies = append(movies[:index], movies[:index+1]...)
+			w.WriteHeader(204)
+			break
+		}
+
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(fail)
+	}
 }
 
 func updateMovie(w http.ResponseWriter, r *http.Request) {
